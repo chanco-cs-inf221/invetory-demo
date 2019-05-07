@@ -3,26 +3,30 @@ import logo from './logo.svg';
 import './App.css';
 import Item from './components/Item';
 import {Modal, ModalHeader, ModalBody, Button,  ModalFooter} from 'reactstrap'
+
+const loadItems = () => {
+  return JSON.parse(localStorage.getItem('items'))
+} 
+
+const saveItem = (items) => {
+  localStorage.setItem('items', JSON.stringify(items))
+} 
 class App extends React.Component {
 
   constructor(){
     super()
-    this.items = [
-      {category: "Sporting Goods", price: "$49.99", stocked: true, name: "Football"},
-      {category: "Sporting Goods", price: "$9.99", stocked: true, name: "Baseball"},
-      {category: "Sporting Goods", price: "$29.99", stocked: false, name: "Basketball"},
-      {category: "Electronics", price: "$99.99", stocked: true, name: "iPod Touch"},
-      {category: "Electronics", price: "$399.99", stocked: false, name: "iPhone 5"},
-      {category: "Electronics", price: "$199.99", stocked: true, name: "Nexus 7"}
-    ]
+    this.items = loadItems() || []
     this.state = {
       searchValue: '',
-      modal: false
+      modal: false,
+      name: '',
+      price: 0
     }
     this.renderItem = this.renderItem.bind(this)
     this.handleChange = this.handleChange.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleFormSubmit = this.handleFormSubmit.bind(this)
     this.toggle = this.toggle.bind(this);
+    this.onChange = this.onChange.bind(this)
   }
 
   renderItem(){
@@ -35,8 +39,28 @@ class App extends React.Component {
 
   }
 
-  handleSubmit(e){
-    
+  handleFormSubmit(e){
+    console.log(this.state.name, this.state.price)
+
+    const { name, price } = this.state; 
+    this.items.push({id: this.generateID(5), name, price: `$${price}`})
+    saveItem(this.items)
+    e.preventDefault()
+    this.toggle()
+  }
+
+  generateID(length){
+    const result           = '';
+    const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
+  onChange(e){
+    this.setState({[e.target.name]: e.target.value})
   }
 
   handleChange(event) {
@@ -89,14 +113,25 @@ class App extends React.Component {
         </section>
 
         <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-          <ModalHeader toggle={this.toggle}>Modal title</ModalHeader>
-          <ModalBody>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-          </ModalBody>
-          <ModalFooter>
-            <Button color="primary" onClick={this.toggle}>Do Something</Button>{' '}
-            <Button color="secondary" onClick={this.toggle}>Cancel</Button>
-          </ModalFooter>
+          <form onSubmit={this.handleFormSubmit}>
+            <ModalHeader toggle={this.toggle}>Modal title</ModalHeader>
+            <ModalBody>
+            
+                <div className="form-group">
+                    <label >Item Name</label>
+                    <input onChange={this.onChange} type="text" name='name' className="form-control" defaultValue={this.state.name}  placeholder="Enter item name"/>
+                </div>
+                <div className="form-group">
+                    <label>Price</label>
+                    <input onChange={this.onChange} type="number" name='price' className="form-control" defaultValue={this.state.price}  placeholder="Enter item name"/>
+                </div>
+            
+            </ModalBody>
+            <ModalFooter>
+              <input type="submit" className='btn btn-primary' value='Add New Item'/>
+              <Button color="secondary" onClick={this.toggle}>Cancel</Button>
+            </ModalFooter>
+          </form>
         </Modal>
       </div>
     )
