@@ -84,14 +84,23 @@ class App extends React.Component {
   }
 
   handleChange(event) {
-    this.setState({searchValue: event.target.value});
-    this.items = this.search(event.target.value)
+    const itemToSearch = event.target.value
+
+    this.setState({
+      searchValue: itemToSearch.trim(),
+      items: this.search(itemToSearch.trim())
+    })
   }
 
   search(name){
-    return this.state.items.filter((item) => {
-      return item.name.includes(name)
-    })
+      if (name === ''){
+        return loadItems()
+      }
+      else{
+        return this.state.items.filter((item) => {
+          return item.name.includes(name)
+        })
+      }
   }
 
   toggle() {
