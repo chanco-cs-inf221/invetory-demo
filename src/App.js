@@ -1,34 +1,24 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Item from './components/Item';
 import {Modal, ModalHeader, ModalBody, Button,  ModalFooter} from 'reactstrap'
-import { resolve } from 'q';
 import Details from './components/Details';
+import { loadItems, saveItem } from './globals'
 
-const loadItems = () => {
-  return JSON.parse(localStorage.getItem('items'))
-} 
-
-const saveItem = (items) => {
-  return new Promise((resolve, reject) => {
-    localStorage.setItem('items', JSON.stringify(items))
-    resolve(loadItems())
-  })
-} 
 class App extends React.Component {
 
   constructor(){
     super()
     this.state = {
-      searchValue: '',
-      isItemSelected: false,
-      modal: false,
-      name: '',
-      items: loadItems() || [],
-      item: {},
-      price: 0
+      searchValue: '', // corresponds to input search value
+      isItemSelected: false, // true or false depending on whether item was selected or not
+      modal: false, // controls the modal
+      name: '', // value from item name field on add new item form 
+      items: loadItems() || [], // house all items in app
+      item: {}, // house selected item in app
+      price: 0, // value of item price on add new item form
     }
+
     this.renderItem = this.renderItem.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.handleFormSubmit = this.handleFormSubmit.bind(this)
@@ -39,8 +29,9 @@ class App extends React.Component {
     this.setSelectedItem = this.setSelectedItem.bind(this)
   }
 
-  renderItem(){
 
+  // process all the items then render them 
+  renderItem(){
     return this.state.items.map((item)=>{
      return <Item 
         item={item}
@@ -49,26 +40,25 @@ class App extends React.Component {
 
   }
 
+  // fired after add new item form has been submitted
   handleFormSubmit(e){
-    console.log(this.state.name, this.state.price)
-
     const { name, price } = this.state; 
     const newItems = [
-      ...this.state.items, 
-      {id: this.generateID(5), name, price: `$${price}`}
+      ...this.state.items, // copy elements from old array to new array
+      {id: this.generateID(5), name, price: `$${price}`} // append new array element
     ]
     
     saveItem(newItems)
       .then((result) => {
-        return this.setState({
-          items: result
-        })
-
+        // update items in state on successful save
+        return this.setState({items: result})
       })
+
     e.preventDefault()
     this.toggle()
   }
 
+  // generate unique id for item
   generateID(length){
     let result           = '';
     const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -79,10 +69,12 @@ class App extends React.Component {
     return result;
   }
 
+  // update state.name and state.price values upon entering data in corresponding fields
   onChange(e){
     this.setState({[e.target.name]: e.target.value})
   }
 
+  // fire upon entering data in search input field
   handleChange(event) {
     const itemToSearch = event.target.value
 
@@ -92,29 +84,33 @@ class App extends React.Component {
     })
   }
 
+  // filter items array on item name
   search(name){
       if (name === ''){
-        return loadItems()
+        return loadItems() // return all items when nothing entered, backspace on will reset
       }
       else{
+        // return matched items
         return this.state.items.filter((item) => {
           return item.name.includes(name)
         })
       }
   }
 
+  // control the modal for new item form
   toggle() {
     this.setState(prevState => ({
       modal: !prevState.modal
     }));
   }
 
+  // fire when deleting item
   removeItem = (name) => {
-    const newItems = this.filterOut(name)
+    const newItems = this.filterOut(name) // filter out matching item name from items
     
     saveItem(newItems)
       .then((result) => {
-
+        // update state values upon successfull save
         return this.setState({
           items: result,
           item: {},
@@ -124,11 +120,13 @@ class App extends React.Component {
       })
   }
 
+  // fiter out item with matching name in items
   filterOut(name) {
     return this.state.items.filter((item) => {
       return !item.name.includes(name)
     })
   }
+
 
   setSelectedItem(item){
     this.setState({item, isItemSelected: true})
