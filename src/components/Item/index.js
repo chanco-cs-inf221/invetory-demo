@@ -1,8 +1,13 @@
 import React from 'react'
 
-function Item({name, price}){
+function Item({item, selectedItem}){
+    const {name, price} = item
+
+    const onSelect = () => {
+        selectedItem(item)
+    }
     return (
-        <button type="button" class="list-group-item list-group-item-action">
+        <button onClick={onSelect} type="button" class="list-group-item list-group-item-action">
             {name} {price}
         </button>
     )

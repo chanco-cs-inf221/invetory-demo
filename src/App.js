@@ -3,23 +3,30 @@ import logo from './logo.svg';
 import './App.css';
 import Item from './components/Item';
 import {Modal, ModalHeader, ModalBody, Button,  ModalFooter} from 'reactstrap'
+import { resolve } from 'q';
+import Details from './components/Details';
 
 const loadItems = () => {
   return JSON.parse(localStorage.getItem('items'))
 } 
 
 const saveItem = (items) => {
-  localStorage.setItem('items', JSON.stringify(items))
+  return new Promise((resolve, reject) => {
+    localStorage.setItem('items', JSON.stringify(items))
+    resolve(loadItems())
+  })
 } 
 class App extends React.Component {
 
   constructor(){
     super()
-    this.items = loadItems() || []
     this.state = {
       searchValue: '',
+      isItemSelected: false,
       modal: false,
       name: '',
+      items: loadItems() || [],
+      item: {},
       price: 0
     }
     this.renderItem = this.renderItem.bind(this)
@@ -27,14 +34,17 @@ class App extends React.Component {
     this.handleFormSubmit = this.handleFormSubmit.bind(this)
     this.toggle = this.toggle.bind(this);
     this.onChange = this.onChange.bind(this)
+    this.removeItem = this.removeItem.bind(this)
+    this.filterOut = this.filterOut.bind(this)
+    this.setSelectedItem = this.setSelectedItem.bind(this)
   }
 
   renderItem(){
 
-    return this.items.map((item)=>{
+    return this.state.items.map((item)=>{
      return <Item 
-        name={item.name}
-        price={item.price}/>
+        item={item}
+        selectedItem={this.setSelectedItem}/>
     })
 
   }
@@ -43,14 +53,24 @@ class App extends React.Component {
     console.log(this.state.name, this.state.price)
 
     const { name, price } = this.state; 
-    this.items.push({id: this.generateID(5), name, price: `$${price}`})
-    saveItem(this.items)
+    const newItems = [
+      ...this.state.items, 
+      {id: this.generateID(5), name, price: `$${price}`}
+    ]
+    
+    saveItem(newItems)
+      .then((result) => {
+        return this.setState({
+          items: result
+        })
+
+      })
     e.preventDefault()
     this.toggle()
   }
 
   generateID(length){
-    const result           = '';
+    let result           = '';
     const characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
     for ( var i = 0; i < length; i++ ) {
@@ -66,12 +86,10 @@ class App extends React.Component {
   handleChange(event) {
     this.setState({searchValue: event.target.value});
     this.items = this.search(event.target.value)
-    console.log(this.items)
   }
 
   search(name){
-    console.log(name)
-    return this.items.filter((item) => {
+    return this.state.items.filter((item) => {
       return item.name.includes(name)
     })
   }
@@ -80,6 +98,31 @@ class App extends React.Component {
     this.setState(prevState => ({
       modal: !prevState.modal
     }));
+  }
+
+  removeItem = (name) => {
+    const newItems = this.filterOut(name)
+    
+    saveItem(newItems)
+      .then((result) => {
+
+        return this.setState({
+          items: result,
+          item: {},
+          isItemSelected: false
+        })
+
+      })
+  }
+
+  filterOut(name) {
+    return this.state.items.filter((item) => {
+      return !item.name.includes(name)
+    })
+  }
+
+  setSelectedItem(item){
+    this.setState({item, isItemSelected: true})
   }
 
   render(){
@@ -110,6 +153,18 @@ class App extends React.Component {
                 </button>
                 { this.renderItem() }
               </div>
+            
+            {/*condition ? whentrue : whenfalse*/}
+
+            { this.state.isItemSelected ? 
+              <Details 
+                item={this.state.item}
+                itemToRemove={this.removeItem}/> 
+                
+                :
+
+              <></>
+            }
         </section>
 
         <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
